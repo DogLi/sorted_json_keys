@@ -78,25 +78,12 @@ fn main() {
     let j = filter(
         json!([1,null,3,null,{"a": [1,2,3,4, "Abrar" ]}]),
         &|value| match value {
-            JsonValue::Number(number) => {
-                if number.is_i64() && number.as_i64().unwrap() < 5 {
-                    true
-                } else {
-                    false
-                }
-            }
+            JsonValue::Number(number) => number.is_i64() && number.as_i64().unwrap() < 5,
 
-            JsonValue::String(string) => {
-                if string == "Abrar" {
-                    false
-                } else {
-                    true
-                }
-            }
+            JsonValue::String(string) => string != "Abrar",
 
             _ => true,
         },
     );
     println!("{:?}", j);
-    ()
 }

@@ -1,6 +1,4 @@
-extern crate failure;
-#[macro_use]
-extern crate serde_json;
+use thiserror::Error;
 
 pub mod filter;
 pub mod sort;
@@ -8,13 +6,13 @@ pub mod sort;
 #[cfg(test)]
 pub mod test;
 
-use failure::Fail;
-
-type MyResult<T> = Result<T, failure::Error>;
 type JsonValue = serde_json::Value;
+pub type Result<T> = std::result::Result<T, Error>;
 
-#[derive(Copy, Clone, Eq, PartialEq, Debug, Fail)]
-pub enum ErrorKind {
-    #[fail(display = "Value error")]
+#[derive(Debug, Error)]
+pub enum Error {
+    #[error("Value error")]
     ValueError,
+    #[error("Not able to Serialize")]
+    SerializeError(#[from] serde_json::Error),
 }

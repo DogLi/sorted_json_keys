@@ -1,34 +1,37 @@
-use crate::{ErrorKind, JsonValue, MyResult};
-use failure::Fail;
+use crate::{Error, JsonValue, Result};
 use serde_json;
 use std::collections::{BTreeMap, HashMap};
+use serde::Serialize;
 
-pub fn sort_list(value: JsonValue) -> MyResult<JsonValue> {
+fn sort_list(value: JsonValue) -> Result<JsonValue> {
     let list: Vec<JsonValue> = value
         .as_array()
         .map(|x| x.to_owned())
-        .ok_or(ErrorKind::ValueError)?;
+        .ok_or(Error::ValueError)?;
     let mut new_list: Vec<JsonValue> = vec![];
     for json_value in list.into_iter() {
-        new_list.push(sort_json(json_value)?)
+        new_list.push(sorted_json(json_value)?)
     }
-    serde_json::to_value(new_list).map_err(|err| err.context("Not able to Serialize").into())
+    let v = serde_json::to_value(new_list)?;
+    Ok(v)
 }
 
-pub fn sort_map(value: JsonValue) -> MyResult<JsonValue> {
+fn sort_map(value: JsonValue) -> Result<JsonValue> {
     let map = value
         .as_object()
         .map(|x| x.to_owned())
-        .ok_or(ErrorKind::ValueError)?;
+        .ok_or(Error::ValueError)?;
     let mut new_map = HashMap::new();
     for (key, value) in map.into_iter() {
-        new_map.insert(key, sort_json(value)?);
+        new_map.insert(key, sorted_json(value)?);
     }
     let btree_map: BTreeMap<_, _> = new_map.iter().collect();
-    serde_json::to_value(btree_map).map_err(|err| err.context("Not able to Serialize").into())
+    let v = serde_json::to_value(btree_map)?;
+    Ok(v)
 }
 
-pub fn sort_json(value: JsonValue) -> MyResult<JsonValue> {
+pub fn sorted_json<S: Serialize>(data: S) -> Result<JsonValue> {
+    let value = serde_json::to_value(data)?;
     if value.is_object() {
         return sort_map(value);
     }
